@@ -1,0 +1,39 @@
+@import "tailwindcss";
+
+@layer utilities {
+  .organic-blob-1 {
+    position: absolute;
+    top: -50px;
+    left: -50px;
+    width: 220px;
+    height: 220px;
+    background: #FFC79A;
+    border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%;
+    z-index: 0;
+    opacity: 0.55;
+    filter: blur(28px);
+    pointer-events: none;
+  }
+  .organic-blob-2 {
+    position: absolute;
+    bottom: -80px;
+    right: -50px;
+    width: 260px;
+    height: 260px;
+    background: #e6deff;
+    border-radius: 60% 40% 30% 70% / 50% 40% 60% 50%;
+    z-index: 0;
+    opacity: 0.55;
+    filter: blur(28px);
+    pointer-events: none;
+  }
+  .scan-line {
+    animation: scan 2s infinite linear;
+  }
+  @keyframes scan {
+    0% { top: 0%; opacity: 0; }
+    15% { opacity: 1; }
+    85% { opacity: 1; }
+    100% { top: 100%; opacity: 0; }
+  }
+}

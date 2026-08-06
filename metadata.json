@@ -1,0 +1,6 @@
+{
+  "name": "Tracky",
+  "description": "A playful, modern parcel tracking and barcode scanner app for logistics management.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
