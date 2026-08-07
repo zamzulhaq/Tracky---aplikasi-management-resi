@@ -11,11 +11,13 @@ export * from './verificationTypes';
 export * from './verificationService';
 export * from './syncTypes';
 export * from './syncService';
+export * from './historyService';
 import { createMatchingService } from './matchingService';
-import { createSyncService, type SyncDependencies } from './syncService';
+import { createSyncService } from './syncService';
 import { WooCommerceClient } from './wooCommerceClient';
 import { WooCommerceRepository } from './wooCommerceRepository';
 import { wooCommerceConfig } from './config';
+import { saveHistoryEntry } from './historyService';
 
 const wooClient = new WooCommerceClient(wooCommerceConfig);
 
@@ -25,12 +27,15 @@ export const orderRepository = new WooCommerceRepository(wooClient);
 
 export const matchingService = createMatchingService(orderRepository);
 
-// History masih placeholder: ganti saveHistory dengan Firebase Logger saat
-// integrasi Firestore — Sync Engine tidak berubah.
-const placeholderSaveHistory: SyncDependencies['saveHistory'] = async () => {};
-
+// History = localStorage (Firebase dihapus). syncService memanggil saveHistoryEntry
+// HANYA setelah PUT WooCommerce sukses.
 export const syncService = createSyncService({
-  updateOrderStatus: (orderId, status) => wooClient.updateOrderStatus(orderId, status),
-  saveHistory: placeholderSaveHistory,
+  updateOrder: (orderId, status, meta) =>
+    meta
+      ? wooClient.updateOrder(orderId, { status, meta_data: meta })
+      : wooClient.updateOrderStatus(orderId, status),
+  saveHistory: async (entry) => {
+    saveHistoryEntry(entry);
+  },
   targetStatus: wooCommerceConfig.completeStatus,
 });

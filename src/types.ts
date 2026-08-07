@@ -12,7 +12,7 @@ export interface Shipment {
   itemsCount: number;
 }
 
-export type TabType = 'home' | 'scanner' | 'shipments' | 'profile';
+export type TabType = 'home' | 'shipments' | 'profile' | 'orderScan' | 'resiScan';
 
 export interface Order {
   orderId: string;

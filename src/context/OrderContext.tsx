@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
 import { Shipment } from '../types';
 import { orderRepository, wooCommerceConfig } from '../services';
-import { SyncResult } from '../services/syncTypes';
+import { ScanMode, SyncResult } from '../services/syncTypes';
 import { mapOrderToShipment } from '../utils/orderMapping';
 import { computeIsCompleted, computeProgressPercent } from '../utils/progress';
 
@@ -23,7 +23,7 @@ interface OrderContextValue {
   progressPercent: number;
   isCompleted: boolean;
   pullOrders: () => Promise<void>;
-  reportSyncResult: (result: SyncResult) => void;
+  reportSyncResult: (result: SyncResult, opts?: { mode?: ScanMode; resi?: string }) => void;
 }
 
 const OrderContext = createContext<OrderContextValue | null>(null);
@@ -59,26 +59,34 @@ export function OrderProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // Counter naik HANYA jika SyncResult.success. Gagal -> tidak berubah.
-  // Saat sukses, shipment terkait juga dipindah ke status 'Sudah Dikirim'
-  // (orderId hasil scan = shipment.id), sehingga pill filter terisi.
-  // ponytail: increment tanpa dedupe; double-scan resi yang sama bisa
-  // menaikkan counter 2x. Tambah dedupe per orderId bila itu masalah nyata.
-  const reportSyncResult = useCallback((result: SyncResult) => {
-    if (result.success) {
+  // Saat sukses, shipment terkait ikut berubah di collection yang sama:
+  // mode ORDER -> 'Sudah Dikirim'; mode RESI -> 'Completed' + trackingNumber
+  // = nomor resi hasil scan (verbatim). Duplicate protection dibaca UI dari
+  // status collection ini.
+  const reportSyncResult = useCallback(
+    (result: SyncResult, opts?: { mode?: ScanMode; resi?: string }) => {
+      if (!result.success) return;
       setVerifiedCount((v) => v + 1);
       setTodayScans((v) => v + 1);
       const orderId = result.verification.order?.orderId;
+      const isResi = opts?.mode === 'RESI';
       if (orderId) {
         setShipments((prev) =>
           prev.map((s) =>
             s.id === orderId
-              ? { ...s, status: 'Sudah Dikirim', scannedAt: new Date().toISOString().replace('T', ' ').substring(0, 16) }
+              ? {
+                  ...s,
+                  status: isResi ? 'Completed' : 'Sudah Dikirim',
+                  trackingNumber: isResi && opts?.resi ? opts.resi : s.trackingNumber,
+                  scannedAt: new Date().toISOString().replace('T', ' ').substring(0, 16),
+                }
               : s
           )
         );
       }
-    }
-  }, []);
+    },
+    []
+  );
 
   const progressPercent = useMemo(
     () => computeProgressPercent(verifiedCount, totalCount),

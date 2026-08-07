@@ -4,13 +4,15 @@ import { useOrders } from '../hooks/useOrders';
 
 interface HomeViewProps {
   shipments: Shipment[];
-  onGoToScanner: () => void;
+  onGoToOrderScan: () => void;
+  onGoToResiScan: () => void;
   onGoToShipments: () => void;
 }
 
 export const HomeView: React.FC<HomeViewProps> = ({
   shipments,
-  onGoToScanner,
+  onGoToOrderScan,
+  onGoToResiScan,
   onGoToShipments,
 }) => {
   // Aktif = belum selesai dikirim (Sudah Lunas menunggu scan, In Transit manual).
@@ -32,14 +34,24 @@ export const HomeView: React.FC<HomeViewProps> = ({
             Ready to scan incoming & outgoing warehouse shipments.
           </p>
 
+          {/* Control Center: Order Scan & Resi Scan (workspace) */}
           <button
-            onClick={onGoToScanner}
+            onClick={onGoToOrderScan}
             className="mt-4 bg-[#FFC79A] text-[#1E1A34] font-bold text-[14px] px-5 py-2.5 rounded-full border-[2px] border-[#1E1A34] flex items-center gap-2 hover:bg-[#ffb67b] cursor-pointer active:scale-95 transition-transform"
           >
             <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: "'FILL' 1" }}>
               barcode_scanner
             </span>
-            Open Scanner
+            Order Scan
+          </button>
+          <button
+            onClick={onGoToResiScan}
+            className="mt-2 bg-white text-[#1E1A34] font-bold text-[14px] px-5 py-2.5 rounded-full border-[2px] border-[#1E1A34] flex items-center gap-2 hover:bg-[#ffe9da] cursor-pointer active:scale-95 transition-transform"
+          >
+            <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: "'FILL' 1" }}>
+              qr_code_scanner
+            </span>
+            Resi Scan
           </button>
         </div>
       </div>

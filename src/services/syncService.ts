@@ -1,29 +1,27 @@
 import { VerificationResult } from './verificationTypes';
-import { SyncResult } from './syncTypes';
+import { HistoryEntry, ScanMode, SyncOptions, SyncResult } from './syncTypes';
 
-export interface HistoryEntry {
-  orderId: string;
-  trackingNumber: string;
-  verified: boolean;
-  timestamp: string;
-}
-
-// Dependensi di-inject agar nanti Firebase Logger / WooCommerce dapat diganti
-// tanpa menyentuh Sync Engine.
 export interface SyncDependencies {
-  updateOrderStatus: (orderId: string, status: string) => Promise<void>;
+  // PUT ke WooCommerce: status (mode ORDER), status + meta resi (mode RESI).
+  updateOrder: (
+    orderId: string,
+    status: string,
+    meta?: Array<{ key: string; value: unknown }>
+  ) => Promise<void>;
   saveHistory: (entry: HistoryEntry) => Promise<void>;
-  // Status tujuan saat order terverifikasi (default 'completed' bila kosong).
+  // Status tujuan mode ORDER (default 'completed' bila kosong).
   targetStatus?: string;
 }
 
 // Sync Engine: SATU-SATUNYA tempat orkestrasi sinkronisasi.
 // UI -> Sync Engine -> (WooCommerce, history). Verification/Scanner tidak tahu backend.
 export function createSyncService(deps: SyncDependencies) {
-  const targetStatus = deps.targetStatus || 'completed';
+  const orderTarget = deps.targetStatus || 'completed';
+  const resiStatus = 'completed';
+  const resiMetaKey = '_custom_no_resi';
 
   return {
-    async sync(verification: VerificationResult): Promise<SyncResult> {
+    async sync(verification: VerificationResult, opts: SyncOptions = {}): Promise<SyncResult> {
       const timestamp = new Date().toISOString();
       const base = { verification, timestamp };
 
@@ -33,18 +31,27 @@ export function createSyncService(deps: SyncDependencies) {
       }
 
       const order = verification.order;
+      const mode: ScanMode = opts.mode === 'RESI' ? 'RESI' : 'ORDER';
+      const isResi = mode === 'RESI';
+      const statusAfter = isResi ? resiStatus : orderTarget;
+      const meta = isResi ? [{ key: resiMetaKey, value: opts.resi ?? '' }] : undefined;
+
       try {
-        await deps.updateOrderStatus(order.orderId, targetStatus);
+        await deps.updateOrder(order.orderId, statusAfter, meta);
       } catch {
         return { ...base, success: false, wooUpdated: false, historySaved: false, reason: 'UPDATE_FAILED' };
       }
 
       try {
         await deps.saveHistory({
+          mode,
           orderId: order.orderId,
-          trackingNumber: order.trackingNumber,
-          verified: true,
+          customerName: order.customerName,
+          trackingNumber: opts.resi ?? order.trackingNumber,
+          statusBefore: order.status,
+          statusAfter,
           timestamp,
+          success: true,
         });
       } catch {
         return { ...base, success: false, wooUpdated: true, historySaved: false, reason: 'HISTORY_SAVE_FAILED' };

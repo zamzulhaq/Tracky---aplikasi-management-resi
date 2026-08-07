@@ -1,5 +1,5 @@
 import assert from 'node:assert';
-import { mapOrderStatus, mapOrderToShipment } from './orderMapping';
+import { mapOrderStatus, mapOrderToShipment, shipmentToOrder } from './orderMapping';
 
 function main() {
   const s = mapOrderToShipment({
@@ -21,6 +21,13 @@ function main() {
   assert.equal(mapOrderStatus('sudah-dikirim'), 'Sudah Dikirim');
   assert.equal(mapOrderStatus('completed'), 'Completed');
   assert.equal(mapOrderStatus('unknown-status'), 'Sudah Lunas');
+
+  // Reverse-map: Shipment -> Order untuk mode RESI Scan.
+  const o = shipmentToOrder({ ...s, status: 'Sudah Dikirim' });
+  assert.equal(o.orderId, '10293');
+  assert.equal(o.customerName, 'Budi Santoso');
+  assert.equal(o.status, 'sudah-dikirim');
+  assert.equal(shipmentToOrder({ ...s, status: 'Completed' }).status, 'completed');
 
   console.log('orderMapping self-check: OK');
 }

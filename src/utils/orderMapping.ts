@@ -9,6 +9,12 @@ const STATUS_MAP: Record<string, Shipment['status']> = {
   completed: 'Completed',
 };
 
+const REVERSE_STATUS_MAP: Record<Shipment['status'], string> = {
+  'Sudah Lunas': 'sudah-lunas',
+  'Sudah Dikirim': 'sudah-dikirim',
+  Completed: 'completed',
+};
+
 export function mapOrderStatus(status: string): Shipment['status'] {
   return STATUS_MAP[status] ?? 'Sudah Lunas';
 }
@@ -27,5 +33,19 @@ export function mapOrderToShipment(order: Order): Shipment {
     weight: '—',
     eta: '—',
     itemsCount: 0,
+  };
+}
+
+// Reverse: Shipment (display) -> Order (input sync). Dipakai mode RESI Scan,
+// karena context menyimpan collection Shipment dan syncService butuh Order.
+// orderNumber == orderId di toko ini (number API selalu sama dengan id).
+export function shipmentToOrder(shipment: Shipment): Order {
+  return {
+    orderId: shipment.id,
+    orderNumber: shipment.id,
+    trackingNumber: shipment.trackingNumber,
+    customerName: shipment.recipient,
+    destination: shipment.destination,
+    status: REVERSE_STATUS_MAP[shipment.status] ?? shipment.status,
   };
 }

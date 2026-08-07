@@ -62,5 +62,13 @@ export class WooCommerceClient {
       body: JSON.stringify({ status }),
     });
   }
+
+  // PUT bebas: status + meta_data (nomor resi). Dipakai mode RESI Scan.
+  async updateOrder(orderId: string | number, payload: Record<string, unknown>): Promise<void> {
+    await this.request(`/orders/${orderId}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
+  }
 }
 // ponytail: satu halaman (per_page=100), pagination ditambah bila order > 100.
