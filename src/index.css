@@ -36,4 +36,10 @@
     85% { opacity: 1; }
     100% { top: 100%; opacity: 0; }
   }
+  /* Field API key: blokir seleksi teks & menu copy (long-press / klik kanan). */
+  .no-copy {
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+  }
 }
